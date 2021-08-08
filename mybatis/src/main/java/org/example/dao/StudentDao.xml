@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.example.dao.StudentDao">
+
+    <!--
+    sql 映射文件：写sql语句的，mybatis会执行这些sql
+    1.指定约束文件
+    <!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+       mybatis-3-mapper.dtd 是约束文件的名称，扩展名是dtd的。
+
+    2.约束文件作用：限制，检查在当前文件中出现的标签，属性必须符合mybatis的要求。
+    3.mapper 是当前文件的根标签，必须的
+       要求使用dao接口的全限定名称
+    4.特定标签 表示数据库操作
+        <select>
+        <update>
+        <insert>
+        <delete>
+    -->
+
+    <!--
+    select:表示查询操作
+    id:执行该sql的唯一标识,可以自定义，但不推荐
+    resultType:表示结果集类型，java对象的全限定名称。 相当于 应该 生成了java文件，直接 导包 的模式把 暂时是这样理解的
+    -->
+
+
+    <select id="selectAll" resultType="org.example.entity.Student">
+        select *
+        from student
+    </select>
+
+    <insert id="insertStudent">
+        insert into students
+        values (#{id}, #{name}, #{email}, #{age})
+    </insert>
+
+    <!--
+    parameterType:dao接口中方法参数的数据类型。
+    parameterType它的值是java的数据类型全限定名称或者是 mybatis定义的别名——参考 note笔记
+    eg: parameterType = "java.lang.Integer" //全限定名
+        parameterType = "int" //别名
+    或者是 不写🙅‍
+    parameterType ,mybatis可以通过反射机制能够获取 接口参数的类型
+
+    -->
+    <select id="selectById" resultType="org.example.entity.Student">
+        select id, name, email, age
+        from student
+        where id = #{paramId}
+    </select>
+
+    <select id="多个参数查询_Param注解" resultType="org.example.entity.Student">
+        select id, name, email, age
+        from student
+        where id = #{paramId}
+           or name = #{paramName}
+    </select>
+    <!--
+    多个参数,使用java对象的属性值,作为参数实际值
+    使用对象语法:#{属性名, javaType=类型名称,jdbcType=数据类型}很少用
+    javaType:指java中的属性数据类型。 jdbcType:在数据库中的数据类型。
+
+    🌟我们使用的简化方式: #{属性名}, javaType, jdbcTypes的值 mybatis反射能获取。不用提供
+
+    -->
+    <select id="多个参数查询_参数对象" resultType="org.example.entity.Student">
+        select id, name, email, age
+        from student
+        where id = #{paramId,javaType=java.lang.Integer,jdbcType=INTEGER}
+           or name = #{paramName,javaType=java.lang.String,jdbcType=VARCHAR}
+    </select>
+
+    <select id="多个参数查询_按位置" resultType="org.example.entity.Student">
+        select id, name, email, age
+        from student
+        where id = #{arg0}
+           or name = #{arg1}
+    </select>
+    <!--
+    #{key}
+    -->
+    <select id="多个参数查询_Map集合" resultType="org.example.entity.Student">
+        select id, name, email, ages
+        from student
+        where id = #{paramId}
+           or name = #{paramName}
+    </select>
+
+    <!--
+    select * from student where age = '22' and email like concat('%','@qq.com') ORDER BY name DESC
+    只要是sql中需要添加''的地方都需要 添加''
+    -->
+    <select id="通过$接收参数排序" resultType="org.example.entity.Student">
+        select *
+        from student
+        where age = ${age}
+          and email like concat('%', '${lastEmail}')
+        ORDER BY ${columnName} DESC
+    </select>
+    <!--
+    在mybatis.xml 中配置
+    <typeAlias type="org.example.entity.Student" alias="student">
+    -->
+    <select id="别名的使用" resultType="student">
+        select *
+        from student
+    </select>
+
+    <select id="resultType_Map" resultType="java.util.HashMap">
+        select id as selfId, name, email
+        from student
+    </select>
+
+
+    <!--————————————————start——————————————————————-->
+    <!--定义resultMap
+    id:自定义名称 ,id 是可重复使用的
+    type：java对象的全限定名称
+    -->
+    <resultMap id="id1" type="org.example.entity.Student">
+        <!--列名和java属性的关系-->
+        <!--
+        主键列,使用id标签
+        column:列名
+        property:java对象的属性名 【不区分大小写】
+        -->
+
+        <id column="id" property="id"/>
+
+        <!--非主键列，使用result -->
+        <result column="name" property="name"></result>
+        <result column="email" property="email"></result>
+        <result column="age" property="age"></result>
+
+    </resultMap>
+
+    <select id="resultMap" resultMap="id1">
+        select *
+        from student
+    </select>
+    <!--————————————————end——————————————————————-->
+
+    <select id="Like模糊查询_1java代码指定" resultType="org.example.entity.Student">
+        select *
+        from student
+        where email like #{lastEmail}
+    </select>
+    <select id="Like模糊查询_2mapper文件拼接" resultType="org.example.entity.Student">
+        select *
+        from student
+        where email like "%" #{lastEmail} "%"
+        <!--"%" 字符串直接最好加 空格，因为 mysql中需要空格，否则报错，虽然这里可以不需要，但是没必要自找麻烦-->
+    </select>
+
+
+</mapper>
